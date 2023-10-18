@@ -4,20 +4,6 @@ set init_script {
     package require twebserver
     package require tink
 
-    proc ::twebserver::set_cookie {res curr} {
-        if { [dict exists $res multiValueHeaders Set-Cookie] } {
-            set prev [dict get $res multiValueHeaders Set-Cookie]
-            dict set res multiValuedHeaders Set-Cookie [list {*}$prev $curr]
-        } elseif { [dict exists $res headers Set-Cookie] } {
-            set prev [dict get $res headers Set-Cookie]
-            dict set res multiValuedHeaders Set-Cookie [list $prev $curr]
-        } else {
-            dict set res headers Set-Cookie $curr
-        }
-        return $res
-    }
-
-
     set hmac_keyset {{
         "primaryKeyId": 691856985,
         "key": [
@@ -63,9 +49,8 @@ set init_script {
         }
         proc leave {ctx req res} {
             variable session_id_cookie_name
-            set curr "${session_id_cookie_name}=[dict get $req session id]; path=/;"
-            set res [::twebserver::set_cookie $res $curr]
-            return $res
+            #set curr "${session_id_cookie_name}=[dict get $req session id]; path=/;"
+            return [::twebserver::add_cookie -httponly $res ${session_id_cookie_name} [dict get $req session id]]
         }
     }
 
