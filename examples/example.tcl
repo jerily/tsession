@@ -4,29 +4,45 @@ set init_script {
     package require twebserver
     package require tink
 
-    set hmac_keyset {{
-        "primaryKeyId": 691856985,
-        "key": [
-          {
-            "keyData": {
-              "typeUrl": "type.googleapis.com/google.crypto.tink.HmacKey",
-              "keyMaterialType": "SYMMETRIC",
-              "value": "EgQIAxAgGiDZsmkTufMG/XlKlk9m7bqxustjUPT2YULEVm8mOp2mSA=="
-            },
-            "outputPrefixType": "TINK",
-            "keyId": 691856985,
-            "status": "ENABLED"
-          }
-        ]
-    }}
-    set hmac_keyset_handle [::tink::register_keyset $hmac_keyset]
+    namespace eval ::tsession::signature {
+        variable hmac_keyset_handle {}
+
+        proc init {hmac_keyset} {
+            variable hmac_keyset_handle
+            set hmac_keyset_handle [::tink::register_keyset $hmac_keyset]
+        }
+
+        proc sign {content} {
+            variable hmac_keyset_handle
+            set bytes [::tink::mac::compute ${hmac_keyset_handle} ${content}]
+            set tag [::twebserver::base64_encode $bytes]
+            set signed_cookie_value "${content}.${tag}"
+            return ${signed_cookie_value}
+        }
+
+        proc unsign {signed_cookie_value} {
+            variable hmac_keyset_handle
+            lassign [split ${signed_cookie_value} "."] content tag_b64
+
+            set tag [::twebserver::base64_decode ${tag_b64}]
+            set verified [::tink::mac::verify ${hmac_keyset_handle} ${tag} ${content}]
+            if { !${verified} } {
+                return {}
+            }
+
+            return ${content}
+        }
+    }
 
     namespace eval ::tsession {
-        variable secret "keyboard cat"
         variable resave false
         variable save_uninitialized false
-        variable cookie [dict create maxAge 3600000]
+        variable cookie [dict create maxage 3600000]
         variable session_id_cookie_name "SID"
+
+        proc init {hmac_keyset} {
+            ::tsession::signature::init $hmac_keyset
+        }
 
         proc random_chars {len} {
             set chars "0123456789abcdef"
@@ -43,7 +59,7 @@ set init_script {
         }
 
         proc get_cookie_session_id {req} {
-            global hmac_keyset_handle
+            variable hmac_keyset_handle
             variable session_id_cookie_name
 
             if { ![dict exists ${req} headers cookie] } {
@@ -60,14 +76,7 @@ set init_script {
                 return {}
             }
 
-            lassign [split ${cookie_session_id} "."] session_id tag_b64
-
-            set tag [::twebserver::base64_decode ${tag_b64}]
-            set verified [::tink::mac::verify ${hmac_keyset_handle} ${tag} ${session_id}]
-            if { !${verified} } {
-                return {}
-            }
-
+            set session_id [::tsession::signature::unsign ${cookie_session_id}]
             return ${session_id}
         }
 
@@ -99,16 +108,33 @@ set init_script {
             return $req
         }
         proc leave {ctx req res} {
-            global hmac_keyset_handle
+            variable hmac_keyset_handle
             variable session_id_cookie_name
 
             set session_id [dict get ${req} session_id]
-            set bytes [::tink::mac::compute ${hmac_keyset_handle} ${session_id}]
-            set tag [::twebserver::base64_encode $bytes]
-            set session_id_cookie_value "${session_id}.${tag}"
+            set session_id_cookie_value [::tsession::signature::sign ${session_id}]
             return [::twebserver::add_cookie -httponly ${res} ${session_id_cookie_name} ${session_id_cookie_value}]
         }
     }
+
+
+    set hmac_keyset {{
+        "primaryKeyId": 691856985,
+        "key": [
+          {
+            "keyData": {
+              "typeUrl": "type.googleapis.com/google.crypto.tink.HmacKey",
+              "keyMaterialType": "SYMMETRIC",
+              "value": "EgQIAxAgGiDZsmkTufMG/XlKlk9m7bqxustjUPT2YULEVm8mOp2mSA=="
+            },
+            "outputPrefixType": "TINK",
+            "keyId": 691856985,
+            "status": "ENABLED"
+          }
+        ]
+    }}
+
+    ::tsession::init $hmac_keyset
 
     set router [::twebserver::create_router]
 
