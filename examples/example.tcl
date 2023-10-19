@@ -44,17 +44,9 @@ set init_script {
             ::tsession::signature::init $hmac_keyset
         }
 
-        proc random_chars {len} {
-            set chars "0123456789abcdef"
-            set result ""
-            for {set i 0} {$i < $len} {incr i} {
-                append result [string index $chars [expr {int(rand() * 16)}]]
-            }
-            return $result
-        }
-
         proc gen_id {} {
-            set content [random_chars 64]
+            set bytes [::twebserver::sha256 [::twebserver::random_bytes 256]]
+            set content [::twebserver::base64_encode $bytes]
             return ${content}
         }
 
@@ -99,8 +91,9 @@ set init_script {
             set cookie_session_id [get_cookie_session_id $req]
 
             if { ${cookie_session_id} eq {} } {
-                puts "creating new session"
-                dict set req session_id [gen_id]
+                set session_id [gen_id]
+                puts "creating new session: ${session_id}"
+                dict set req session_id ${session_id}
             } else {
                 puts "using existing session: ${cookie_session_id}"
                 dict set req session_id ${cookie_session_id}
