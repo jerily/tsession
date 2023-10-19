@@ -38,19 +38,21 @@ set init_script {
         }
 
         proc gen_id {} {
-            global hmac_keyset_handle
             set content [random_chars 64]
-            set tag [::twebserver::base64_encode [::tink::mac::compute $hmac_keyset_handle $content]]
-            return ${content}.${tag}
+            return ${content}
         }
         proc enter {ctx req} {
             dict set req session [dict create id [gen_id]]
             return $req
         }
         proc leave {ctx req res} {
+            global hmac_keyset_handle
             variable session_id_cookie_name
             #set curr "${session_id_cookie_name}=[dict get $req session id]; path=/;"
-            return [::twebserver::add_cookie -httponly $res ${session_id_cookie_name} [dict get $req session id]]
+            set session_id [dict get $req session id]
+            set tag [::twebserver::base64_encode [::tink::mac::compute $hmac_keyset_handle $session_id]]
+            set session_id_cookie_value ${session_id}.${tag}
+            return [::twebserver::add_cookie -httponly $res ${session_id_cookie_name} ${session_id_cookie_value}]
         }
     }
 
