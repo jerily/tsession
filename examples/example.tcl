@@ -41,18 +41,72 @@ set init_script {
             set content [random_chars 64]
             return ${content}
         }
+
+        proc get_cookie_session_id {req} {
+            global hmac_keyset_handle
+            variable session_id_cookie_name
+
+            if { ![dict exists ${req} headers cookie] } {
+                return {}
+            }
+
+            set cookie_header [dict get ${req} headers cookie]
+            if { ${cookie_header} eq {} } {
+                return {}
+            }
+
+            set cookie_session_id [dict get [::twebserver::parse_cookie ${cookie_header}] ${session_id_cookie_name}]
+            if { ${cookie_session_id} eq {} } {
+                return {}
+            }
+
+            lassign [split ${cookie_session_id} "."] session_id tag_b64
+
+            set tag [::twebserver::base64_decode ${tag_b64}]
+            set verified [::tink::mac::verify ${hmac_keyset_handle} ${tag} ${session_id}]
+            if { !${verified} } {
+                return {}
+            }
+
+            return ${session_id}
+        }
+
         proc enter {ctx req} {
-            dict set req session [dict create id [gen_id]]
+
+            # self-awareness
+            if { [dict exists ${req} session] } {
+                return ${req}
+            }
+
+            #
+            if { ![dict exists ${req} cookies] } {
+                if { [dict exists ${req} headers cookie] } {
+                    set cookie_header [dict get ${req} headers cookie]
+                    dict set req cookies [::twebserver::parse_cookie ${cookie_header}]
+                }
+            }
+
+            # get the session id from the cookie
+            set cookie_session_id [get_cookie_session_id $req]
+
+            if { ${cookie_session_id} eq {} } {
+                puts "creating new session"
+                dict set req session [dict create id [gen_id]]
+            } else {
+                puts "using existing session: ${cookie_session_id}"
+                dict set req session [dict create id ${cookie_session_id}]
+            }
             return $req
         }
         proc leave {ctx req res} {
             global hmac_keyset_handle
             variable session_id_cookie_name
-            #set curr "${session_id_cookie_name}=[dict get $req session id]; path=/;"
-            set session_id [dict get $req session id]
-            set tag [::twebserver::base64_encode [::tink::mac::compute $hmac_keyset_handle $session_id]]
-            set session_id_cookie_value ${session_id}.${tag}
-            return [::twebserver::add_cookie -httponly $res ${session_id_cookie_name} ${session_id_cookie_value}]
+
+            set session_id [dict get ${req} session id]
+            set bytes [::tink::mac::compute ${hmac_keyset_handle} ${session_id}]
+            set tag [::twebserver::base64_encode $bytes]
+            set session_id_cookie_value "${session_id}.${tag}"
+            return [::twebserver::add_cookie -httponly ${res} ${session_id_cookie_name} ${session_id_cookie_value}]
         }
     }
 
