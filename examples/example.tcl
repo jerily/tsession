@@ -91,10 +91,10 @@ set init_script {
 
             if { ${cookie_session_id} eq {} } {
                 puts "creating new session"
-                dict set req session [dict create id [gen_id]]
+                dict set req session_id [gen_id]
             } else {
                 puts "using existing session: ${cookie_session_id}"
-                dict set req session [dict create id ${cookie_session_id}]
+                dict set req session_id ${cookie_session_id}
             }
             return $req
         }
@@ -102,7 +102,7 @@ set init_script {
             global hmac_keyset_handle
             variable session_id_cookie_name
 
-            set session_id [dict get ${req} session id]
+            set session_id [dict get ${req} session_id]
             set bytes [::tink::mac::compute ${hmac_keyset_handle} ${session_id}]
             set tag [::twebserver::base64_encode $bytes]
             set session_id_cookie_value "${session_id}.${tag}"
