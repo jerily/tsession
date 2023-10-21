@@ -185,6 +185,12 @@ namespace eval ::tsession {
         return 1
     }
 
+    proc should_touch_session {req} {
+        set cookie_session_id [dict get ${req} cookieSessionId]
+        set req_session_id [dict get ${req} sessionId]
+        return [expr { ${cookie_session_id} eq ${req_session_id} }]
+    }
+
     proc should_set_cookie {req res} {
         variable save_uninitialized
         variable rolling
@@ -203,11 +209,6 @@ namespace eval ::tsession {
         }
 
         return [expr { ${rolling} || ${session_is_modified} }]
-    }
-
-    proc should_touch_session {req} {
-        # todo
-        return 0
     }
 
     proc leave {ctx req res} {

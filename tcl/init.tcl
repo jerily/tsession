@@ -4,4 +4,4 @@ set dir [file dirname [info script]]
 
 source [file join ${dir} session.tcl]
 source [file join ${dir} signature.tcl]
-source [file join ${dir} memstore.tcl]
+source [file join ${dir} memorystore.tcl]
