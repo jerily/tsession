@@ -30,5 +30,16 @@ namespace eval ::tsession::MemoryStore {
         variable sessions
         unset sessions(${session_id})
     }
+
+    proc touch_session {session_id session_dict} {
+        variable sessions
+
+        set current_session_dict [retrieve_session ${session_id}]
+        if { ${current_session_dict} ne {} } {
+            dict set current_session_dict expires [dict get ${session_dict} expires]
+            save_session ${session_id} ${current_session_dict}
+        }
+
+    }
 }
 

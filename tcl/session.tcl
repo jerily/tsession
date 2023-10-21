@@ -111,6 +111,7 @@ namespace eval ::tsession {
             set now [clock seconds]
             set expires [expr { ${now} + ${cookie_maxage} }]
             set req_session_dict [dict create \
+                id ${req_session_id} \
                 expires ${expires}]
 
         } else {
@@ -131,6 +132,7 @@ namespace eval ::tsession {
                 set now [clock seconds]
                 set expires [expr { ${now} + ${cookie_maxage} }]
                 set req_session_dict [dict create \
+                    id ${req_session_id} \
                     expires ${expires}]
 
             }
