@@ -170,7 +170,7 @@ namespace eval ::tsession {
     }
 
     proc should_destroy_session {req res} {
-        return [expr { [dict exists ${req} session_id] && [session_marked_to_be_destroyed ${res}] }]
+        return [expr { [dict exists ${req} sessionId] && [session_marked_to_be_destroyed ${res}] }]
     }
 
     proc should_save_session {req res} {

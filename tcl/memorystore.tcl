@@ -28,7 +28,9 @@ namespace eval ::tsession::MemoryStore {
 
     proc destroy_session {session_id} {
         variable sessions
-        unset sessions(${session_id})
+        if { [info exists sessions(${session_id})] } {
+            unset sessions(${session_id})
+        }
     }
 
     proc touch_session {session_id session_dict} {

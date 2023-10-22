@@ -67,7 +67,7 @@ set init_script {
     proc get_blog_post_handler {ctx req} {
         set addr [dict get $ctx addr]
         set view_user_id [dict get $req pathParameters view_user_id]
-        set loggedin [dict get $req session loggedin]
+        set loggedin [dict exists $req session loggedin]
 
         dict set res statusCode 200
         dict set res headers {content-type text/plain}
