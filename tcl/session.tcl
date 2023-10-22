@@ -207,7 +207,7 @@ namespace eval ::tsession {
         set session_is_modified [session_has_changes ${res}]
 
         if { ${cookie_session_id} ne ${req_session_id} } {
-            return [expr { ${save_uninitialized} || ${session_is_modified}]
+            return [expr { ${save_uninitialized} || ${session_is_modified} }]
         }
 
         return [expr { ${rolling} || ${session_is_modified} }]

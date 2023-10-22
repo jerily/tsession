@@ -32,7 +32,7 @@ set init_script {
         -leave_proc ::tsession::leave \
         $router
 
-    ::twebserver::add_route -strict $router GET /blog/:user_id/sayhi get_blog_post_handler
+    ::twebserver::add_route -strict $router GET /blog/:view_user_id/sayhi get_blog_post_handler
     ::twebserver::add_route -strict $router POST /login post_login_handler
     ::twebserver::add_route -strict $router GET /logout get_logout_handler
     ::twebserver::add_route $router GET "*" get_catchall_handler
@@ -51,7 +51,7 @@ set init_script {
 
         dict set res statusCode 200
         dict set res headers {content-type text/plain}
-        dict set res body "test message POST [dict get $req headers]"
+        dict set res body "you are now logged in"
         return $res
     }
 
@@ -60,20 +60,18 @@ set init_script {
 
         dict set res statusCode 200
         dict set res headers {content-type text/plain}
-        dict set res body "test message GET asdf"
+        dict set res body "you are now logged out"
         return $res
     }
 
-    proc get_qwerty_handler {ctx req} {
-        #puts ctx=[dict get $ctx]
-        #puts req=[dict get $req]
-
+    proc get_blog_post_handler {ctx req} {
         set addr [dict get $ctx addr]
-        set user_id [dict get $req pathParameters user_id]
+        set view_user_id [dict get $req pathParameters view_user_id]
+        set loggedin [dict get $req session loggedin]
 
         dict set res statusCode 200
         dict set res headers {content-type text/plain}
-        dict set res body "test message GET user_id=$user_id addr=$addr"
+        dict set res body "test message GET view_user_id=$view_user_id addr=$addr loggedin=$loggedin"
 
         return $res
     }
