@@ -161,6 +161,11 @@ namespace eval ::tsession {
         dict set res sessionChanges {}
     }
 
+    proc set_cookie_to_delete_it {resVar cookie_name} {
+        upvar ${resVar} res
+        set res [::twebserver::add_cookie -maxage 0 ${res} ${cookie_name} {}]
+    }
+
     proc session_has_changes {res} {
         return [expr { [dict exists ${res} sessionChanges] && [dict get ${res} sessionChanges] ne {} }]
     }
@@ -228,6 +233,7 @@ namespace eval ::tsession {
 
         if { [should_destroy_session ${req} ${res}] } {
             ${store}::destroy_session ${session_id}
+            set_cookie_to_delete_it res ${cookie_name}
             return ${res}
         }
 
