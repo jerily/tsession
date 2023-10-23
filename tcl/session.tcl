@@ -107,7 +107,7 @@ namespace eval ::tsession {
 
             # create new session
             set req_session_id [gen_id]
-            puts "creating new session: ${req_session_id}"
+            # puts "creating new session: ${req_session_id}"
             set now [clock seconds]
             set expires [expr { ${now} + ${cookie_maxage} }]
             set req_session_dict [dict create \
@@ -121,14 +121,14 @@ namespace eval ::tsession {
             if { ${req_session_dict} ne {} } {
 
                 # use existing session
-                puts "using existing session: ${cookie_session_id}"
+                # puts "using existing session: ${cookie_session_id}"
                 set req_session_id ${cookie_session_id}
 
             } else {
 
                 # create new session (old one expired)
                 set req_session_id [gen_id]
-                puts "creating new session after expiration: ${req_session_id}"
+                # puts "creating new session after expiration: ${req_session_id}"
                 set now [clock seconds]
                 set expires [expr { ${now} + ${cookie_maxage} }]
                 set req_session_dict [dict create \
@@ -227,7 +227,7 @@ namespace eval ::tsession {
         variable cookie_path
         variable store
 
-        puts session=[dict get $req session]
+        # puts session=[dict get $req session]
 
         set session_id [dict get ${req} sessionId]
 

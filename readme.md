@@ -52,7 +52,7 @@ See full example [here](examples/example.tcl).
 
     ::twebserver::add_route -strict $router GET /blog/:view_user_id/sayhi get_blog_post_handler
     ::twebserver::add_route -strict $router POST /login post_login_handler
-    ::twebserver::add_route -strict $router GET /logout get_logout_handler
+    ::twebserver::add_route -strict $router POST /logout post_logout_handler
     ::twebserver::add_route $router GET "*" get_catchall_handler
 
     interp alias {} process_conn {} $router
@@ -73,7 +73,7 @@ See full example [here](examples/example.tcl).
         return $res
     }
 
-    proc get_logout_handler {ctx req} {
+    proc post_logout_handler {ctx req} {
         ::tsession::mark_session_to_be_destroyed res
 
         dict set res statusCode 200

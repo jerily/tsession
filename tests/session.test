@@ -66,7 +66,7 @@ test simple-1 {check logged out, login, check logged in, logout, check logged ou
     lappend result [string match "*loggedin=1" $body]
 
     # logout
-    set request "GET /logout HTTP/1.1\nCookie: ${cookie}\n\n"
+    set request "POST /logout HTTP/1.1\nCookie: ${cookie}\n\n"
     set cmd "openssl s_client -connect localhost:${server_port} -servername localhost -quiet"
     set response [exec -ignorestderr -keepnewline -- {*}${cmd} -tls1_3 << $request 2> /dev/null]
     set lines [split $response \n]
