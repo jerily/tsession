@@ -1,0 +1,87 @@
+package require tcltest
+package require twebserver
+
+namespace import -force ::tcltest::test
+
+::tcltest::configure {*}$argv
+
+set server_file "setup_server_session.tcl"
+set server_port 12345
+set client_port 54321
+set control_port 11111
+set dir [file dirname [info script]]
+
+proc sleep {ms} {
+    after $ms [list set ::sleep 1]
+    vwait ::sleep
+    unset ::sleep
+}
+
+proc setup {} {
+    global server_pid
+    global dir
+    global server_file
+    set server_pid [exec -ignorestderr -- tclsh [file join $dir ${server_file}] &]
+    sleep 100
+}
+
+proc cleanup {} {
+    global server_pid
+    exec -ignorestderr -- kill $server_pid 2> /dev/null
+    #global control_port
+    #set sock [socket localhost $control_port]
+    #close $sock
+}
+
+proc escape {str} {
+    return [string map {\r {\r} \n {\n}} $str]
+}
+
+test simple-1 {check logged out, login, check logged in, logout, check logged out} -setup setup -cleanup cleanup -body {
+    global cmd
+
+    # check logged out
+    set request "GET /blog/12345/sayhi HTTP/1.1\n\n"
+    set cmd "openssl s_client -connect localhost:${server_port} -servername localhost -quiet"
+    set response [exec -ignorestderr -keepnewline -- {*}${cmd} -tls1_3 << $request 2> /dev/null]
+    set lines [split $response \n]
+    set body [lindex $lines end]
+    lappend result [string match "*loggedin=0" $body]
+
+    # login
+    set request "POST /login HTTP/1.1\n\n"
+    set cmd "openssl s_client -connect localhost:${server_port} -servername localhost -quiet"
+    set response [exec -ignorestderr -keepnewline -- {*}${cmd} -tls1_3 << $request 2> /dev/null]
+    set lines [split $response \n]
+    set body [lindex $lines end]
+    set cookie [string trim [lindex [split [lindex [split [lindex $lines 2] ":"] end] ";"] 0]]
+    lappend result [expr { ${body} eq {you are now logged in} }]
+
+    # check logged in
+    set request "GET /blog/12345/sayhi HTTP/1.1\nCookie: ${cookie}\n\n"
+    set cmd "openssl s_client -connect localhost:${server_port} -servername localhost -quiet"
+    set response [exec -ignorestderr -keepnewline -- {*}${cmd} -tls1_3 << $request 2> /dev/null]
+    set lines [split $response \n]
+    set body [lindex $lines end]
+    lappend result [string match "*loggedin=1" $body]
+
+    # logout
+    set request "GET /logout HTTP/1.1\nCookie: ${cookie}\n\n"
+    set cmd "openssl s_client -connect localhost:${server_port} -servername localhost -quiet"
+    set response [exec -ignorestderr -keepnewline -- {*}${cmd} -tls1_3 << $request 2> /dev/null]
+    set lines [split $response \n]
+    set body [lindex $lines end]
+    lappend result [expr { ${body} eq {you are now logged out} }]
+
+    # check logged out
+    set request "GET /blog/12345/sayhi HTTP/1.1\nCookie: ${cookie}\n\n"
+    set cmd "openssl s_client -connect localhost:${server_port} -servername localhost -quiet"
+    set response [exec -ignorestderr -keepnewline -- {*}${cmd} -tls1_3 << $request 2> /dev/null]
+    set lines [split $response \n]
+    set body [lindex $lines end]
+    lappend result [string match "*loggedin=0" $body]
+
+    set result
+} -result {1 1 1 1 1}
+
+sleep 100
