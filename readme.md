@@ -20,6 +20,7 @@ make install
 
 The following are supported configuration options:
 
+* **hmac_keyset** - Cleartext keyset to use for HMAC.
 * **cookie_domain** - The domain to set the cookie on.
 * **cookie_httponly** - Whether to set the HttpOnly flag on the cookie. Default is true.
 * **cookie_maxage** - The max age of the cookie in seconds. Default is 86400 (1 day).
