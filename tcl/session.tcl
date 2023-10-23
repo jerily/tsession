@@ -2,7 +2,7 @@
 namespace eval ::tsession {
     variable cookie_domain ""
     variable cookie_httponly "true"
-    variable cookie_maxage 3600000
+    variable cookie_maxage 86400
     variable cookie_path "/"
     variable cookie_samesite "Lax"
     variable cookie_name "SID"
