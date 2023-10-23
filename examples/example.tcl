@@ -1,8 +1,6 @@
 package require twebserver
 
 set init_script {
-    lappend auto_path [file dirname [info script]]/..
-
     package require twebserver
     package require tink
     package require tsession
