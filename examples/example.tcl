@@ -48,7 +48,7 @@ set init_script {
         ::tsession::amend_session_with_changes res loggedin true
 
         dict set res statusCode 200
-        dict set res headers {content-type text/plain}
+        dict set res headers {Content-Type text/plain}
         dict set res body "you are now logged in"
         return $res
     }

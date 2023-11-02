@@ -5,6 +5,7 @@
 namespace eval ::tsession {
     variable cookie_domain ""
     variable cookie_httponly "true"
+    variable cookie_insecure "false"
     variable cookie_maxage 86400
     variable cookie_path "/"
     variable cookie_samesite "Lax"
@@ -16,6 +17,7 @@ namespace eval ::tsession {
     proc init {option_dict} {
         variable cookie_domain
         variable cookie_httponly
+        variable cookie_insecure
         variable cookie_maxage
         variable cookie_path
         variable cookie_samesite
@@ -228,6 +230,7 @@ namespace eval ::tsession {
         variable cookie_domain
         variable cookie_httponly
         variable cookie_path
+        variable cookie_insecure
         variable store
 
         # puts session=[dict get $req session]
@@ -255,9 +258,11 @@ namespace eval ::tsession {
 
                 set cookie_options [list]
 
-                if { ${cookie_maxage} ne {} } {
-                    lappend cookie_options -maxage ${cookie_maxage}
-                }
+                lappend cookie_options -expires [clock format [dict get ${session_dict} expires] -format "%a, %d %b %Y %H:%M:%S GMT"]
+
+                #if { ${cookie_maxage} ne {} } {
+                #    lappend cookie_options -maxage ${cookie_maxage}
+                #}
 
                 if { ${cookie_samesite} ne {} } {
                     lappend cookie_options -samesite ${cookie_samesite}
@@ -271,11 +276,17 @@ namespace eval ::tsession {
                     lappend cookie_options -path ${cookie_path}
                 }
 
-                if { ${cookie_httponly} ne {} } {
+                if { ${cookie_httponly} } {
                     lappend cookie_options -httponly
                 }
 
-                return [::twebserver::add_cookie {*}${cookie_options} ${res} ${cookie_name} ${cookie_value}]
+                if { ${cookie_insecure} } {
+                    lappend cookie_options -insecure
+                }
+
+                set res [::twebserver::add_cookie {*}${cookie_options} ${res} ${cookie_name} ${cookie_value}]
+
+                return ${res}
             }
 
         } elseif { [should_touch_session ${req}] } {
