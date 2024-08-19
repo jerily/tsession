@@ -302,4 +302,20 @@ namespace eval ::tsession {
         return ${res}
     }
 
+    proc is_logged_in {ctx req} {
+        if { ![dict exists ${req} session loggedin] } {
+            return -code error -options [::twebserver::build_response 401 text/plain "unauthorized"]
+        }
+        return $req
+    }
+
+    proc login_user {resVar} {
+        upvar ${resVar} res
+        ::tsession::amend_session_with_changes res loggedin true
+    }
+
+    proc logout_user {resVar} {
+        upvar ${resVar} res
+        ::tsession::mark_session_to_be_destroyed res
+    }
 }
