@@ -4,8 +4,8 @@ Simple session middleware for [twebserver](https://github.com/jerily/twebserver)
 
 ## Prerequisites
 
-- [twebserver](https://github.com/jerily/twebserver) (version 1.47.11 and above)
-- [tink-tcl](https://github.com/jerily/tink-tcl) (version 2.0.0 and above)
+- [twebserver](https://github.com/jerily/twebserver) (version 1.47.51 and above)
+- [tink-tcl](https://github.com/jerily/tink-tcl) (version 20240704.0 and above)
 
 ## Installation
 

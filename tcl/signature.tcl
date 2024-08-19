@@ -7,6 +7,7 @@ namespace eval ::tsession::signature {
 
     proc init {hmac_keyset} {
         variable hmac_keyset_handle
+        package require tink
         set hmac_keyset_handle [::tink::register_keyset $hmac_keyset]
     }
 

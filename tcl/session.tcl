@@ -12,7 +12,7 @@ namespace eval ::tsession {
     variable cookie_name "SID"
     variable rolling "false"
     variable save_uninitialized "false"
-    variable store "::tsession::MemoryStore"
+    variable store "MemoryStore"
 
     proc init {option_dict} {
         variable cookie_domain
@@ -62,6 +62,10 @@ namespace eval ::tsession {
 
         if { [dict exists ${option_dict} save_uninitialized] } {
             set save_uninitialized [dict get ${option_dict} save_uninitialized]
+        }
+
+        if { [dict exists ${option_dict} cookie_insecure] } {
+            set cookie_insecure [dict get ${option_dict} cookie_insecure]
         }
 
         if { [dict exists ${option_dict} store] } {
@@ -285,6 +289,8 @@ namespace eval ::tsession {
                 }
 
                 set res [::twebserver::add_cookie {*}${cookie_options} ${res} ${cookie_name} ${cookie_value}]
+
+                puts res=$res
 
                 return ${res}
             }
