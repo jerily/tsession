@@ -290,7 +290,7 @@ namespace eval ::tsession {
 
                 set res [::twebserver::add_cookie {*}${cookie_options} ${res} ${cookie_name} ${cookie_value}]
 
-                puts res=$res
+                #puts res=$res
 
                 return ${res}
             }
