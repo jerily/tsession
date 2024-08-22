@@ -33,7 +33,7 @@ The following are supported configuration options:
 
 ## Examples
 
-See full example [here](examples/example.tcl).
+See full example [here](examples/app.tcl).
 
 ```tcl
     package require twebserver
@@ -58,7 +58,7 @@ See full example [here](examples/example.tcl).
 
     ::tsession::init [dict create hmac_keyset $hmac_keyset save_uninitialized 0]
 
-    set router [::twebserver::create_router]
+    ::twebserver::create_router -command_name process_conn router
 
     ::twebserver::add_middleware \
         -enter_proc ::tsession::enter \
@@ -69,8 +69,6 @@ See full example [here](examples/example.tcl).
     ::twebserver::add_route -strict $router POST /login post_login_handler
     ::twebserver::add_route -strict $router POST /logout post_logout_handler
     ::twebserver::add_route $router GET "*" get_catchall_handler
-
-    interp alias {} process_conn {} $router
 
     proc get_catchall_handler {ctx req} {
         dict set res statusCode 404

@@ -2,10 +2,15 @@
 # SPDX-FileCopyrightText: 2023 Neofytos Dimitriou (neo@jerily.cy)
 # SPDX-License-Identifier: MIT.
 
-package require Thread
-
 namespace eval ::tsession::MemoryStore {
-    tsv::array set sessions {}
+
+    proc init {config_dict} {
+        package require Thread
+        tsv::array set sessions {}
+        if {[dict size $config_dict] > 0} {
+            error "MemoryStore does not accept any configuration"
+        }
+    }
 
     proc retrieve_session {session_id} {
 

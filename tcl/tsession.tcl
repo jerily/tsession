@@ -30,7 +30,15 @@ namespace eval ::tsession {
             error "tsession::init: option_dict must contain hmac_keyset"
         }
 
+        if { ![dict exists ${option_dict} store] || [dict size [dict get $option_dict store]] != 1 } {
+            error "tsession::init: option_dict must contain exactly one store"
+        }
+
         ::tsession::signature::init [dict get ${option_dict} hmac_keyset]
+
+        dict for {store store_config} [dict get $option_dict store] {
+            ${store}::init $store_config
+        }
 
         if { [dict exists ${option_dict} cookie_domain] } {
             set cookie_domain [dict get ${option_dict} cookie_domain]
@@ -66,10 +74,6 @@ namespace eval ::tsession {
 
         if { [dict exists ${option_dict} cookie_insecure] } {
             set cookie_insecure [dict get ${option_dict} cookie_insecure]
-        }
-
-        if { [dict exists ${option_dict} store] } {
-            set store [dict get ${option_dict} store]
         }
     }
 
