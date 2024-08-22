@@ -12,7 +12,7 @@ Simple session middleware for [twebserver](https://github.com/jerily/twebserver)
 ```bash
 # It installs to /usr/local/lib
 # To install elsewhere, change the prefix
-# e.g. make install prefix=/path/to/install
+# e.g. make install PREFIX=/path/to/install
 make install
 ```
 
