@@ -29,7 +29,7 @@ The following are supported configuration options:
 * **cookie_name** - The name of the cookie. Default is "SID".
 * **rolling** - Whether to roll the session on each request. Default is false.
 * **save_uninitialized** - Forces a session that is "uninitialized" to be saved to the store. A session is uninitialized when it is new but not modified.
-* **store** - The store to use. Default is "::tsession::MemoryStore".
+* **store** - The store to use. Default is "MemoryStore".
 
 ## Examples
 
