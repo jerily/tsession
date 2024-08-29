@@ -89,7 +89,7 @@ set config_dict [dict create \
     num_threads 10 \
     gzip on \
     gzip_types [list text/plain application/json] \
-    gzip_min_length 20]
+    gzip_min_length 8192]
 set server_handle [::twebserver::create_server -with_router $config_dict process_conn $init_script]
 ::twebserver::add_context $server_handle localhost [file join $dir "../certs/host1/key.pem"] [file join $dir "../certs/host1/cert.pem"]
 ::twebserver::listen_server $server_handle 4433
