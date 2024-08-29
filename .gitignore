@@ -5,3 +5,5 @@ models
 *.o
 *.so
 install
+ttrek-venv
+ttrek-lock.json

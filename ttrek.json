@@ -1,0 +1,14 @@
+{
+  "name": "tsession",
+  "version": "1.0.3",
+  "scripts": {
+
+  },
+  "dependencies": {
+    "twebserver": "^1.47.51",
+    "tink-tcl": "^20240704.0.0"
+  },
+  "devDependencies": {
+
+  }
+}
