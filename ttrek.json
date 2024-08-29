@@ -6,7 +6,8 @@
   },
   "dependencies": {
     "twebserver": "^1.47.51",
-    "tink-tcl": "^20240704.0.0"
+    "tink-tcl": "^20240704.0.0",
+    "thread": ">=2.8.0"
   },
   "devDependencies": {
 
