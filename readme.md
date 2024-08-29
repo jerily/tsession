@@ -34,3 +34,8 @@ The following are supported configuration options:
 ## Examples
 
 See full example [here](examples/app.tcl).
+
+## Compatible Session Stores
+
+- [tsession-dynamodb](https://github.com/jerily/tsession-dynamodb)
+- [tsession-valkey](https://github.com/jerily/tsession-valkey)
