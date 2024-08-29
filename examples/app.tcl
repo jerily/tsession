@@ -97,6 +97,6 @@ set server_handle [::twebserver::create_server -with_router $config_dict process
 
 puts "Server running on https://localhost:4433 and http://localhost:8080"
 
-vwait forever
+::twebserver::wait_signal
 ::twebserver::destroy_server $server_handle
 
