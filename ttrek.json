@@ -1,15 +1,11 @@
 {
   "name": "tsession",
-  "version": "1.0.3",
-  "scripts": {
-
-  },
+  "version": "1.0.4",
+  "scripts": {},
   "dependencies": {
-    "twebserver": "^1.47.53",
-    "tink-tcl": "^20240704.0.0",
-    "thread": ">=2.8.0"
+    "twebserver": "^1.47.56",
+    "tink-tcl": "^20240704.0.2",
+    "thread": ">=3.0.7"
   },
-  "devDependencies": {
-
-  }
+  "devDependencies": {}
 }
