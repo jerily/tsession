@@ -39,3 +39,31 @@ See full example [here](examples/app.tcl).
 
 - [tsession-dynamodb](https://github.com/jerily/tsession-dynamodb)
 - [tsession-valkey](https://github.com/jerily/tsession-valkey)
+
+## Cookies for an application-owned session store
+
+`tsession::cookie` provides per-mount signed cookies without initializing the
+legacy middleware or its global MemoryStore. The application keeps its session
+records, expiry, rotation and revocation in its own store. Cookie values are
+opaque session identifiers, never user details.
+
+```tcl
+set cookies [::tsession::cookie::create -name SID -mac $macHandle -secure true]
+set sessionId [::tsession::cookie::read $cookies $request]
+set response [::tsession::cookie::issue $cookies $response $sessionId]
+# To expire the browser cookie with the same scope:
+set response [::tsession::cookie::clear $cookies $response]
+```
+
+`-mac` is a registered Tink MAC keyset handle owned by the caller. Other options
+are `-path /`, `-domain {}`, `-httponly true`, and `-samesite Lax`. Secure defaults
+to true; use `-secure false` only for local HTTP. Host/Secure cookie prefixes and
+SameSite=None enforce their required secure attributes. Issued cookies have a
+browser-session lifetime; the backing store must enforce server-side expiry.
+Identifiers contain 1–512 ASCII letters, digits, underscores or hyphens. Read
+returns an empty string for missing, duplicate, malformed or tampered cookies.
+Signatures bind the identifier to the cookie name, path and domain. Response
+headers and other cookies are preserved through `twebserver::add_cookie`.
+The legacy `init`/`enter`/`leave` middleware API is unchanged.
+
+Run the independent cookie suite with `tclsh tests/cookie.test`.

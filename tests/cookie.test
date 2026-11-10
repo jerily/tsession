@@ -1,0 +1,53 @@
+package require tcltest 2
+lappend auto_path [file dirname [file dirname [file normalize [info script]]]]
+package require tsession 1.0.4
+package require tink
+package require twebserver
+namespace import ::tcltest::*
+set handle [::tink::register_keyset [::tink::mac::create_keyset HMAC_SHA256]]
+set config [::tsession::cookie::create -name SID -mac $handle]
+proc cookie_request {response} {
+    dict create headers [dict create Cookie [lindex [split [dict get $response headers Set-Cookie] {;}] 0]]
+}
+test cookie-1 {round trip, attributes and unrelated response headers} -body {
+    set res [::tsession::cookie::issue $config {statusCode 200 headers {X-Test kept} body ok} abc_123]
+    set cookie [dict get $res headers Set-Cookie]
+    list [::tsession::cookie::read $config [cookie_request $res]] [dict get $res headers X-Test] \
+        [string match {*; Path=/; SameSite=Lax; Secure; HttpOnly} $cookie]
+} -result {abc_123 kept 1}
+test cookie-2 {tampering, malformed and duplicate cookies fail closed} -body {
+    set request [cookie_request [::tsession::cookie::issue $config {} original]]
+    set cookie [dict get $request headers Cookie]
+    set result {}
+    foreach bad [list [string map {original forged} $cookie] "$cookie.extra" SID=oops "$cookie; $cookie" "SID=; $cookie"] {
+        lappend result [::tsession::cookie::read $config [dict create headers [dict create cookie $bad]]]
+    }
+    set result
+} -result {{} {} {} {} {}}
+test cookie-3 {names and scopes cannot reuse another mount's signature} -body {
+    set request [cookie_request [::tsession::cookie::issue $config {} session1]]
+    set other [::tsession::cookie::create -name SID -path /other -mac $handle]
+    set renamed [::tsession::cookie::create -name OTHER -mac $handle]
+    set forged [dict create headers [dict create cookie [string map {SID= OTHER=} [dict get $request headers Cookie]]]]
+    list [::tsession::cookie::read $other $request] [::tsession::cookie::read $renamed $forged]
+} -result {{} {}}
+test cookie-4 {deletion preserves cookie scope; LOCAL can use HTTP} -body {
+    set local [::tsession::cookie::create -name local -mac $handle -secure false -path /account -domain example.test]
+    dict get [::tsession::cookie::clear $local {}] headers Set-Cookie
+} -result {local=; Domain=example.test; Path=/account; SameSite=Lax; HttpOnly; Max-Age=0}
+test cookie-5 {invalid policies and header injection rejected at configuration} -body {
+    set result {}
+    foreach options [list {-name __Host-ID -secure false} {-name __Host-ID -path /other} {-name __Host-ID -domain example.test} \
+        {-samesite None -secure false} [list -domain "bad\r\nX-Injected: yes"] {-secure maybe}] {
+        lappend result [catch {::tsession::cookie::create -mac $handle {*}$options}]
+    }
+    set result
+} -result {1 1 1 1 1 1}
+test cookie-6 {issuing preserves another Set-Cookie header} -body {
+    set res [::twebserver::add_cookie {} preference blue]
+    set res [::tsession::cookie::issue $config $res session1]
+    set all [dict get $res multiValueHeaders Set-Cookie]
+    list [llength $all] [string match {preference=blue;*} [lindex $all 0]] [string match {SID=session1.*} [lindex $all 1]]
+} -result {2 1 1}
+::tink::unregister_keyset $handle
+cleanupTests
