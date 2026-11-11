@@ -1,80 +1,78 @@
 # tsession
 
-Simple session middleware for [twebserver](https://github.com/jerily/twebserver).
+Per-mount signed cookies and tenant-scoped SQL session persistence for Tcl.
+Requires `tink-tcl` and `twebserver`. SQL stores additionally use `tpersist`.
+There is no process-wide session state or default memory store.
 
-## Prerequisites
-
-- [twebserver](https://github.com/jerily/twebserver) (version 1.47.53 and above)
-- [tink-tcl](https://github.com/jerily/tink-tcl) (version 20240704.0 and above)
-
-## Installation
-
-```bash
-# It installs to /usr/local/lib
-# To install elsewhere, change the prefix
-# e.g. make install PREFIX=/path/to/install
-make install
-```
-
-## Usage
-
-The following are supported configuration options:
-
-* **hmac_keyset** - Cleartext keyset to use for HMAC.
-* **cookie_domain** - The domain to set the cookie on.
-* **cookie_httponly** - Whether to set the HttpOnly flag on the cookie. Default is true.
-* **cookie_maxage** - The max age of the cookie in seconds. Default is 86400 (1 day).
-* **cookie_path** - The path to set the cookie on. Default is "/".
-* **cookie_samesite** - The SameSite attribute of the cookie. Default is "Lax".
-* **cookie_name** - The name of the cookie. Default is "SID".
-* **rolling** - Whether to roll the session on each request. Default is false.
-* **save_uninitialized** - Forces a session that is "uninitialized" to be saved to the store. A session is uninitialized when it is new but not modified.
-* **store** - The store to use. Default is "MemoryStore".
-
-## Examples
-
-See full example [here](examples/app.tcl).
-
-## Compatible Session Stores
-
-- [tsession-dynamodb](https://github.com/jerily/tsession-dynamodb)
-- [tsession-valkey](https://github.com/jerily/tsession-valkey)
-
-## Cookies for an application-owned session store
-
-`tsession::cookie` provides per-mount signed cookies without initializing the
-legacy middleware or its global MemoryStore. The application keeps its session
-records, expiry, rotation and revocation in its own store. Cookie values are
-opaque session identifiers, never user details.
+## Cookies
 
 ```tcl
+package require tsession 2.0.0
 set cookies [::tsession::cookie::create -name SID -mac $macHandle -secure true]
 set sessionId [::tsession::cookie::read $cookies $request]
 set response [::tsession::cookie::issue $cookies $response $sessionId]
-# To expire the browser cookie with the same scope:
 set response [::tsession::cookie::clear $cookies $response]
 ```
 
-`-mac` is a registered Tink MAC keyset handle owned by the caller. Other options
-are `-path /`, `-domain {}`, `-httponly true`, and `-samesite Lax`. Secure defaults
-to true; use `-secure false` only for local HTTP. Host/Secure cookie prefixes and
-SameSite=None enforce their required secure attributes. Issued cookies have a
-browser-session lifetime; the backing store must enforce server-side expiry.
-Identifiers contain 1–512 ASCII letters, digits, underscores or hyphens. Read
-returns an empty string for missing, duplicate, malformed or tampered cookies.
-Signatures bind the identifier to the cookie name, path and domain. Response
-headers and other cookies are preserved through `twebserver::add_cookie`.
-The legacy `init`/`enter`/`leave` middleware API is unchanged.
+The caller owns the registered Tink MAC handle. Options are `-name SID`, `-mac`
+(required), `-path /`, `-domain {}`, `-secure true`, `-httponly true`, and
+`-samesite Lax`. Use `-secure false` for local HTTP. Host/Secure cookie prefixes
+and SameSite=None enforce their required secure attributes.
 
-Run the independent cookie suite with `tclsh tests/cookie.test`.
+Identifiers contain 1–512 ASCII letters, digits, underscores or hyphens. Read
+returns empty for missing, duplicate, malformed or tampered cookies. Signatures
+bind the identifier to the cookie name, path and domain. Response headers and
+other cookies are preserved. Cookies have a browser-session lifetime; the store
+enforces server-side expiry. Applications own authentication, CSRF and rotation.
 
 ## SQL stores
 
-`tsession-sqlite` and `tsession-postgres` use the optional `tsession::sql` 1.1.0
-package bundled here. Each factory validates a borrowed `tpersist` connection
-and creates a tenant-scoped value. Call `tsession::sql::insert`, `get`, `update`,
-`delete`, `revoke`, and `prune` with that value. Schema creation is explicit;
-there are no automatic migrations or adapters for the global middleware API.
-See the store packages for usage. `web-user` uses SQLite in LOCAL and PostgreSQL
-in PROD, sharing its account transaction connection. The common module requires
-tpersist 0.1.2 only when a SQL store is loaded.
+- `tsession-sqlite` selects a borrowed SQLite connection.
+- `tsession-postgres` selects a borrowed PostgreSQL connection.
+
+Both factories require a tenant and reject the wrong connection dialect. Each
+worker owns its connection. Factories never initialize schema; call the store's
+`initdb` procedure explicitly before serving requests.
+
+```tcl
+package require tsession-sqlite 1.0.1
+set db [::tpersist::db_connect -database ./sessions.sqlite3 -autobegin 0]
+::tsession::sqlite::initdb $db
+set store [::tsession::sqlite::create -connection $db -tenant my-site]
+::tsession::sql::insert $store opaque-id [dict create expires [expr {[clock seconds]+3600}]] user-1
+set data [::tsession::sql::get $store opaque-id]
+::tsession::sql::update $store opaque-id {preference dark}
+::tsession::sql::revoke $store user-1
+::tsession::sql::prune $store
+::tpersist::db_disconnect $db
+```
+
+`tsession::sql` 2.0.0 is bundled here and requires tpersist 0.1.2+. Its `insert`,
+`get`, `update`, `delete`, `revoke`, and `prune` operations use only `tpersist`.
+Writes share the caller's transactions. Updates use revision checks and cannot
+revive expired or revoked sessions. Expiry is absolute. Dictionaries are data,
+never evaluated as scripts; applications encrypt sensitive fields before saving.
+For authentication, use a MAC of the browser token as the database ID, as shown
+in [examples/sqlite.tcl](examples/sqlite.tcl).
+
+The `tsession_sessions` primary key `(tenant, id)` supports reads/updates/deletes.
+Indexes on `(tenant, subject)` and `(tenant, expires)` support revocation and
+pruning. `web-user` uses these stores for LOCAL/PROD respectively. The community
+integration suite verifies their query plans on SQLite and PostgreSQL.
+
+Version 2 removes the global middleware, MemoryStore and standalone signature
+API. Use the APIs above; no compatibility wrappers are provided.
+
+## Install and test
+
+```sh
+make install PREFIX=/path/to/prefix
+# With native dependencies on TCLLIBPATH:
+tclsh tests/all.tcl
+# Also install tsession-sqlite to run the complete cookie/store example:
+tclsh examples/sqlite.tcl
+```
+
+Store package suites cover persistence, expiry, tenant isolation, revocation
+and transaction rollback. Generated cookie jars are ignored and must not be
+committed.

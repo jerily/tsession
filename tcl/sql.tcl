@@ -116,4 +116,4 @@ proc ::tsession::sql::prune {store} {
         [db_and [predicate $store] [db_le [db_col expires] [db_value [clock seconds] -type bigint]]]]] rowcount]
 }
 
-package provide tsession::sql 1.1.0
+package provide tsession::sql 2.0.0

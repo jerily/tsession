@@ -7,3 +7,5 @@ models
 install
 ttrek-venv
 ttrek-lock.json
+# Generated browser/session credentials; never commit cookie jars.
+/cookies.txt
