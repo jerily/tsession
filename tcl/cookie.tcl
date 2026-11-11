@@ -1,5 +1,5 @@
 # Signed session cookies with configuration owned by each caller, independent of
-# the legacy middleware's process-wide store. The caller owns the Tink handle
+# any global state. The caller owns the Tink handle
 # and the session's lifetime, rotation and revocation in its backing store.
 namespace eval ::tsession::cookie {}
 
