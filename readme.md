@@ -67,3 +67,14 @@ headers and other cookies are preserved through `twebserver::add_cookie`.
 The legacy `init`/`enter`/`leave` middleware API is unchanged.
 
 Run the independent cookie suite with `tclsh tests/cookie.test`.
+
+## SQL stores
+
+`tsession-sqlite` and `tsession-postgres` use the optional `tsession::sql` 1.1.0
+package bundled here. Each factory validates a borrowed `tpersist` connection
+and creates a tenant-scoped value. Call `tsession::sql::insert`, `get`, `update`,
+`delete`, `revoke`, and `prune` with that value. Schema creation is explicit;
+there are no automatic migrations or adapters for the global middleware API.
+See the store packages for usage. `web-user` uses SQLite in LOCAL and PostgreSQL
+in PROD, sharing its account transaction connection. The common module requires
+tpersist 0.1.2 only when a SQL store is loaded.
