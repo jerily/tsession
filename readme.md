@@ -47,7 +47,7 @@ set data [::tsession::sql::get $store opaque-id]
 ::tpersist::db_disconnect $db
 ```
 
-`tsession::sql` 2.0.0 is bundled here and requires tpersist 0.1.2+. Its `insert`,
+`tsession::sql` 2.0.0 is bundled here and requires tpersist 0.1.4+. Its `insert`,
 `get`, `update`, `delete`, `revoke`, and `prune` operations use only `tpersist`.
 Writes share the caller's transactions. Updates use revision checks and cannot
 revive expired or revoked sessions. Expiry is absolute. Dictionaries are data,

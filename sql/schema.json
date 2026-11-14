@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "tables": [
+    {
+      "name": "tsession_sessions",
+      "columns": {
+        "tenant": {
+          "type": "text",
+          "not_null": true
+        },
+        "id": {
+          "type": "text",
+          "not_null": true
+        },
+        "subject": {
+          "type": "text",
+          "not_null": true
+        },
+        "expires": {
+          "type": "bigint",
+          "not_null": true
+        },
+        "data": {
+          "type": "text",
+          "not_null": true
+        },
+        "revision": {
+          "type": "bigint",
+          "not_null": true
+        }
+      },
+      "primary_key": [
+        "tenant",
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "tsession_subject",
+          "columns": [
+            "tenant",
+            "subject"
+          ]
+        },
+        {
+          "name": "tsession_expiry",
+          "columns": [
+            "tenant",
+            "expires"
+          ]
+        }
+      ]
+    }
+  ]
+}
