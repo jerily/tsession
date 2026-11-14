@@ -1,8 +1,12 @@
-# SPDX-License-Identifier: MIT
+# Copyright Jerily LTD. All Rights Reserved.
+# SPDX-FileCopyrightText: 2026 Neofytos Dimitriou (neo@jerily.cy)
+# SPDX-License-Identifier: MIT.
+
 # Shared SQL persistence for tsession-sqlite and tsession-postgres. A store is a
 # value, not a global singleton; its caller owns the tpersist connection.
-package require tpersist 0.1.2
+package require tpersist 0.1.4
 namespace eval ::tsession::sql {
+    variable root [file normalize [file join [file dirname [info script]] ..]]
     namespace import ::tpersist::db_*
 }
 
@@ -24,15 +28,11 @@ proc ::tsession::sql::check_connection {connection dialect} {
     if {[db_dialect $connection] ne $dialect} {error "session store requires a $dialect connection"}
 }
 
+# Validate the backend and apply the shared session schema.
 proc ::tsession::sql::initdb {connection dialect} {
+    variable root
     check_connection $connection $dialect
-    set fields {}
-    foreach {name type} {tenant text id text subject text expires bigint data text revision bigint} {
-        dict set fields $name [dict create type $type not_null 1]
-    }
-    db_create_table $connection [db_define_table tsession_sessions $fields -primary_key {tenant id}] -if_not_exists 1
-    db_create_index $connection tsession_subject tsession_sessions {tenant subject} -if_not_exists 1
-    db_create_index $connection tsession_expiry tsession_sessions {tenant expires} -if_not_exists 1
+    db_apply_schema $connection [file join $root sql schema.json] -additive true
 }
 
 proc ::tsession::sql::predicate {store {id {}}} {
@@ -116,4 +116,4 @@ proc ::tsession::sql::prune {store} {
         [db_and [predicate $store] [db_le [db_col expires] [db_value [clock seconds] -type bigint]]]]] rowcount]
 }
 
-package provide tsession::sql 2.0.0
+package provide tsession::sql 2.0.1

@@ -1,8 +1,9 @@
 {
   "name": "tsession",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "scripts": {},
   "dependencies": {
+    "tpersist": "^0.1.4",
     "twebserver": "^1.47.56",
     "tink-tcl": "^20240704.0.2"
   },
