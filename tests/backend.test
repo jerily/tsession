@@ -1,0 +1,35 @@
+package require tcltest 2
+namespace import ::tcltest::*
+
+# Give each case a fresh package registry so host-installed adapters cannot mask failures.
+set sessionInit [file join [file dirname [info script]] .. tcl init.tcl]
+test backend-postgres {both PostgreSQL dialect spellings load only the PostgreSQL adapter} -setup {
+    set child [interp create]
+    $child eval [list source $sessionInit]
+    $child eval {
+        package unknown {}
+        package ifneeded tsession-postgres 1.0.2 {
+            namespace eval ::tsession::postgres {
+                proc initdb {connection} {return $connection}
+                proc create {args} {return $args}
+            }
+            package provide tsession-postgres 1.0.2
+        }
+    }
+} -body {
+    $child eval {
+        list [::tsession::initdb db {db_dialect postgresql}] \
+            [::tsession::create {db_dialect postgres} -connection db -tenant example] \
+            [package provide tsession-sqlite]
+    }
+} -cleanup {interp delete $child} -result {db {-connection db -tenant example} {}}
+
+test backend-missing {initialization reports the missing configured adapter} -setup {
+    set child [interp create]
+    $child eval [list source $sessionInit]
+    $child eval {package unknown {}}
+} -body {
+    $child eval {::tsession::initdb db {db_dialect sqlite}}
+} -cleanup {interp delete $child} -returnCodes error -match glob -result {*tsession-sqlite*}
+
+cleanupTests

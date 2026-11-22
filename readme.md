@@ -30,15 +30,18 @@ enforces server-side expiry. Applications own authentication, CSRF and rotation.
 - `tsession-sqlite` selects a borrowed SQLite connection.
 - `tsession-postgres` selects a borrowed PostgreSQL connection.
 
-Both factories require a tenant and reject the wrong connection dialect. Each
-worker owns its connection. Factories never initialize schema; call the store's
-`initdb` procedure explicitly before serving requests.
+The site installs and loads the adapter for its configured `db_dialect`.
+Both `postgres` and `postgresql` select `tsession-postgres`. Each worker owns
+its connection. Call `::tsession::initdb` during provisioning and
+`::tsession::create` to open a tenant-scoped store on a matching connection.
 
 ```tcl
-package require tsession-sqlite 1.0.1
+package require tsession 2.0.2
+package require tsession-sqlite 1.0.2
+set config [dict create db_dialect sqlite]
 set db [::tpersist::db_connect -database ./sessions.sqlite3 -autobegin 0]
-::tsession::sqlite::initdb $db
-set store [::tsession::sqlite::create -connection $db -tenant my-site]
+::tsession::initdb $db $config
+set store [::tsession::create $config -connection $db -tenant my-site]
 ::tsession::sql::insert $store opaque-id [dict create expires [expr {[clock seconds]+3600}]] user-1
 set data [::tsession::sql::get $store opaque-id]
 ::tsession::sql::update $store opaque-id {preference dark}
