@@ -27,6 +27,7 @@ enforces server-side expiry. Applications own authentication, CSRF and rotation.
 
 ## SQL stores
 
+- `tsession-mysql` selects a borrowed MySQL connection.
 - `tsession-sqlite` selects a borrowed SQLite connection.
 - `tsession-postgres` selects a borrowed PostgreSQL connection.
 
@@ -50,7 +51,7 @@ set data [::tsession::sql::get $store opaque-id]
 ::tpersist::db_disconnect $db
 ```
 
-`tsession::sql` 2.0.0 is bundled here and requires tpersist 0.1.4+. Its `insert`,
+The bundled `tsession::sql` requires tpersist 0.1.12 or newer. Its `insert`,
 `get`, `update`, `delete`, `revoke`, and `prune` operations use only `tpersist`.
 Writes share the caller's transactions. Updates use revision checks and cannot
 revive expired or revoked sessions. Expiry is absolute. Dictionaries are data,

@@ -5,15 +5,18 @@
       "name": "tsession_sessions",
       "columns": {
         "tenant": {
-          "type": "text",
+          "type": "varchar",
+          "length": 255,
           "not_null": true
         },
         "id": {
-          "type": "text",
+          "type": "varchar",
+          "length": 255,
           "not_null": true
         },
         "subject": {
-          "type": "text",
+          "type": "varchar",
+          "length": 255,
           "not_null": true
         },
         "expires": {
