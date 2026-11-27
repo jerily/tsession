@@ -2,7 +2,7 @@ ifndef PREFIX
     PREFIX  = /usr/local
 endif
 
-VERSION = 2.0.2
+VERSION = 2.0.3
 INSTALLDIR=${PREFIX}/lib/tsession${VERSION}
 
 install:

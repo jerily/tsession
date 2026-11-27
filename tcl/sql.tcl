@@ -2,9 +2,9 @@
 # SPDX-FileCopyrightText: 2026 Neofytos Dimitriou (neo@jerily.cy)
 # SPDX-License-Identifier: MIT.
 
-# Shared SQL persistence for tsession-sqlite and tsession-postgres. A store is a
+# Shared SQL persistence for the SQL session adapters. A store is a
 # value, not a global singleton; its caller owns the tpersist connection.
-package require tpersist 0.1.4
+package require tpersist 0.1.12
 namespace eval ::tsession::sql {
     variable root [file normalize [file join [file dirname [info script]] ..]]
     namespace import ::tpersist::db_*
@@ -116,4 +116,4 @@ proc ::tsession::sql::prune {store} {
         [db_and [predicate $store] [db_le [db_col expires] [db_value [clock seconds] -type bigint]]]]] rowcount]
 }
 
-package provide tsession::sql 2.0.2
+package provide tsession::sql 2.0.3

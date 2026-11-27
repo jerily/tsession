@@ -9,7 +9,7 @@ source [file join [file dirname [info script]] cookie.tcl]
 proc ::tsession::require_backend {config} {
     set dialect [dict get $config db_dialect]
     switch -- $dialect {
-        sqlite {set backend sqlite}
+        mysql - sqlite {set backend $dialect}
         postgres - postgresql {set backend postgres}
         default {error "unsupported SQL session dialect: $dialect"}
     }
@@ -27,4 +27,4 @@ proc ::tsession::create {config args} {
     ${backend}::create {*}$args
 }
 
-package provide tsession 2.0.2
+package provide tsession 2.0.3
